@@ -32,11 +32,11 @@ namespace Camara_MARS
     // Definicion de estructuras
     public enum IMV_EInterfaceType
     {
-    	interfaceTypeAll = 0x00000000,
-    	interfaceTypeGige = 0x00000001,
-    	interfaceTypeUsb3 = 0x00000002,
-    	interfaceTypeCL = 0x00000004,
-    	interfaceTypePCIe = 0x00000008,
+    	interfaceTypeAll = 0,
+    	interfaceTypeGige = 1,
+    	interfaceTypeUsb3 = 2,
+    	interfaceTypeCL = 4,
+    	interfaceTypePCIe = 8,
     }
 
     public enum IMV_ECameraType
@@ -54,5 +54,45 @@ namespace Camara_MARS
     	public uint nDevNum;		
         public IntPtr pDevInfo;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_DeviceInfo
+    {
+    	public IMV_ECameraType nCameraType;		
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public int[] nCameraReserved;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string cameraKey;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string cameraName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string serialName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string vendorName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string modelName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string manufactureInfo;
+        
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string deviceVersion;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 5*256)]
+        public char[][] cameraReserved;
+
+
+
+
+
+
+    }
+
 
 }
