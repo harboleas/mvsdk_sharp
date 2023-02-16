@@ -32,7 +32,7 @@ namespace Camara_MARS
             Console.WriteLine(info.manufactureInfo);
             Console.WriteLine(info.cameraKey);
             Console.WriteLine(info.deviceVersion);
-//            Console.WriteLine(info.DeviceSpecificInfo.usbDeviceInfo
+            Console.WriteLine(info.DeviceSpecificInfo.usbDeviceInfo.maxPower);
 
         }
     }
@@ -193,19 +193,19 @@ namespace Camara_MARS
     [StructLayout(LayoutKind.Explicit)]
     public struct _DeviceSpecificInfo
     {
+//        [FieldOffset(0)]
+//        public IMV_GigEDeviceInfo gigeDeviceInfo;
         [FieldOffset(0)]
-        IMV_GigEDeviceInfo gigeDeviceInfo;
-        [FieldOffset(0)]
-        IMV_UsbDeviceInfo usbDeviceInfo;
+        public IMV_UsbDeviceInfo usbDeviceInfo;
     }
 
     [StructLayout(LayoutKind.Explicit)]
     public struct _InterfaceInfo
     {
+//        [FieldOffset(0)]
+//        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
         [FieldOffset(0)]
-        IMV_GigEInterfaceInfo gigeInterfaceInfo;
-        [FieldOffset(0)]
-        IMV_UsbInterfaceInfo usbInterfaceInfo;
+        public IMV_UsbInterfaceInfo usbInterfaceInfo;
     }
 
     [StructLayout(LayoutKind.Sequential)]
