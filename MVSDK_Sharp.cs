@@ -12,27 +12,34 @@ namespace Camara_MARS
         [DllImport("MVSDK.so")]
         static extern int IMV_EnumDevices(out IMV_DeviceList DeviceList, IMV_EInterfaceType interfaceType);   
         
-        public static int EnumDevices()
+        public static IMV_DeviceInfo[] EnumDevices(IMV_EInterfaceType EInterfaceType)
         {
-            return 0;    
+            IMV_DeviceList devlist;
+            var ret = IMV_EnumDevices(out devlist, EInterfaceType);
+            var info = new IMV_DeviceInfo[devlist.nDevNum];
+            int size = Marshal.SizeOf<IMV_DeviceInfo>();
+            for (int i = 0; i < devlist.nDevNum; i++)
+                info[i] = Marshal.PtrToStructure<IMV_DeviceInfo>(devlist.pDevInfo + i*size);
+
+            return info;      
         }
 
         static void Main(string[] args)
         {
 
-            IMV_DeviceList devlist;
-            //Console.WriteLine(IMV_GetVersion());
-            var ret = IMV_EnumDevices(out devlist, IMV_EInterfaceType.interfaceTypeUsb3);
-            Console.WriteLine(ret);
-            Console.WriteLine(devlist.nDevNum);
-            var info = Marshal.PtrToStructure<IMV_DeviceInfo>(devlist.pDevInfo);
-            Console.WriteLine(info.cameraName);
-            Console.WriteLine(info.vendorName);
-            Console.WriteLine(info.modelName);
-            Console.WriteLine(info.manufactureInfo);
-            Console.WriteLine(info.cameraKey);
-            Console.WriteLine(info.deviceVersion);
-            Console.WriteLine(info.DeviceSpecificInfo.usbDeviceInfo.maxPower);
+            var info = EnumDevices(IMV_EInterfaceType.interfaceTypeUsb3);
+
+            for (int i = 0; i < info.Length; i++)
+            {
+                Console.WriteLine(info[i].cameraName);
+                Console.WriteLine(info[i].vendorName);
+                Console.WriteLine(info[i].modelName);
+                Console.WriteLine(info[i].manufactureInfo);
+                Console.WriteLine(info[i].cameraKey);
+                Console.WriteLine(info[i].deviceVersion);
+                Console.WriteLine(info[i].DeviceSpecificInfo.usbDeviceInfo.maxPower);
+                Console.WriteLine(info[i].InterfaceInfo.usbInterfaceInfo.description);
+            }
 
         }
     }
@@ -202,8 +209,8 @@ namespace Camara_MARS
     [StructLayout(LayoutKind.Explicit)]
     public struct _InterfaceInfo
     {
-//        [FieldOffset(0)]
-//        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
+        [FieldOffset(0)]
+        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
         [FieldOffset(0)]
         public IMV_UsbInterfaceInfo usbInterfaceInfo;
     }
