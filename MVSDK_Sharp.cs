@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Camara_MARS
+namespace Camera_MARS
 {
     // API
-    public class IMVApi
+    public static class IMVApi
     {
         [DllImport("MVSDK.so")]
         static extern string IMV_GetVersion();   
@@ -24,23 +24,35 @@ namespace Camara_MARS
             return info;      
         }
 
+        [DllImport("MVSDK.so")]
+        static extern int IMV_CreateHandle(out IntPtr handle, IMV_ECreateHandleMode mode, IntPtr pIdentifier);   
+        
+        [StructLayout(LayoutKind.Sequential)]
+        struct Id
+        {
+            public uint index;
+        }
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_DestroyHandle(IntPtr handle);   
+ 
         static void Main(string[] args)
         {
-
+        
             var info = EnumDevices(IMV_EInterfaceType.interfaceTypeUsb3);
 
             for (int i = 0; i < info.Length; i++)
             {
-                Console.WriteLine(info[i].cameraName);
-                Console.WriteLine(info[i].vendorName);
-                Console.WriteLine(info[i].modelName);
-                Console.WriteLine(info[i].manufactureInfo);
                 Console.WriteLine(info[i].cameraKey);
-                Console.WriteLine(info[i].deviceVersion);
-                Console.WriteLine(info[i].DeviceSpecificInfo.usbDeviceInfo.maxPower);
-                Console.WriteLine(info[i].InterfaceInfo.usbInterfaceInfo.description);
             }
 
+            IntPtr handle;
+            var id = new Id() { index =  0};
+            IntPtr pid = Marshal.AllocHGlobal(Marshal.SizeOf(id));
+            Marshal.StructureToPtr<Id>(id, pid, true);
+
+            var ret = IMV_CreateHandle(out handle, IMV_ECreateHandleMode.modeByIndex, pid);
+            Console.WriteLine(ret);
         }
     }
 
@@ -73,7 +85,6 @@ namespace Camara_MARS
         public const int IMV_GVSP_PIX_COLOR = 0x02000000;
         public const uint IMV_GVSP_PIX_CUSTOM = 0x80000000;
         public const uint IMV_GVSP_PIX_COLOR_MASK = 0xFF000000;
-
         public const int IMV_GVSP_PIX_OCCUPY1BIT = 0x00010000;
         public const int IMV_GVSP_PIX_OCCUPY2BIT = 0x00020000;
         public const int IMV_GVSP_PIX_OCCUPY4BIT = 0x00040000;
@@ -84,16 +95,24 @@ namespace Camara_MARS
         public const int IMV_GVSP_PIX_OCCUPY32BIT = 0x00200000;
         public const int IMV_GVSP_PIX_OCCUPY36BIT = 0x00240000;
         public const int IMV_GVSP_PIX_OCCUPY48BIT = 0x00300000;
+        //
+        public const int IMV_MSG_EVENT_ID_EXPOSURE_END = 0x9001;
+        public const int IMV_MSG_EVENT_ID_FRAME_TRIGGER = 0x9002;
+        public const int IMV_MSG_EVENT_ID_FRAME_START = 0x9003;
+        public const int IMV_MSG_EVENT_ID_ACQ_START = 0x9004;
+        public const int IMV_MSG_EVENT_ID_ACQ_TRIGGER = 0x9005;
+        public const int IMV_MSG_EVENT_ID_DATA_READ_OUT = 0x9006;
     }
 
-    // Definicion de estructuras
-    public enum IMV_EInterfaceType
+    // Definicion de enums
+    public enum IMV_EInterfaceType : uint
     {
-    	interfaceTypeAll = 0,
-    	interfaceTypeGige = 1,
-    	interfaceTypeUsb3 = 2,
-    	interfaceTypeCL = 4,
-    	interfaceTypePCIe = 8,
+      	interfaceTypeGige = 0x00000001,		
+	    interfaceTypeUsb3 = 0x00000002,		
+	    interfaceTypeCL = 0x00000004, 			
+	    interfaceTypePCIe = 0x00000008,		
+	    interfaceTypeAll = 0x00000000,	
+	    interfaceInvalidType = 0xFFFFFFFF	
     }
 
     public enum IMV_ECameraType
@@ -105,203 +124,74 @@ namespace Camara_MARS
         typeUndefinedCamera = 255	
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_DeviceList
+    public enum IMV_ECreateHandleMode
     {
-    	public uint nDevNum;		
-        public IntPtr pDevInfo;
+	    modeByIndex = 0,
+	    modeByCameraKey,
+	    modeByDeviceUserID,
+	    modeByIPAddress		
+    } 
+
+    public enum IMV_ECameraAccessPermission
+    {
+    	accessPermissionOpen = 0,
+    	accessPermissionExclusive,
+    	accessPermissionControl,
+    	accessPermissionControlWithSwitchover,
+    	accessPermissionUnknown = 254,  
+    	accessPermissionUndefined			
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct _string_256 
+    public enum IMV_EGrabStrategy
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string value;
+    	grabStrartegySequential = 0,
+    	grabStrartegyLatestImage = 1,
+    	grabStrartegyUpcomingImage = 2,
+    	grabStrartegyUndefined   				
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_GigEInterfaceInfo
+    public enum IMV_EEventStatus
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string description;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string macAddress;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string ipAddress;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string subnetMask;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string defaultGateWay;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-        public _string_256[] chReserved;
+    	streamEventNormal = 1,
+    	streamEventLostFrame = 2,
+    	streamEventLostPacket = 3,
+    	streamEventImageError = 4,
+    	streamEventStreamChannelError = 5,
+    	streamEventTooManyConsecutiveResends = 6,
+    	streamEventTooManyLostPacket = 7
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_UsbInterfaceInfo
+    public enum IMV_EBayerDemosaic
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string description;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string vendorID;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string deviceID;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string subsystemID;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string revision;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string speed;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public _string_256[] chReserved;
+    	demosaicNearestNeighbor,
+    	demosaicBilinear,
+    	demosaicEdgeSensing,
+    	demosaicNotSupport = 255,
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_GigEDeviceInfo
+    public enum IMV_EVType
     {
-      	/// Supported IP configuration options of device\n
-    	/// value:4 Device supports LLA \n
-    	/// value:5 Device supports LLA and Persistent IP\n
-    	/// value:6 Device supports LLA and DHCP\n
-    	/// value:7 Device supports LLA, DHCP and Persistent IP\n
-    	/// value:0 Get fail
-        public uint nIpConfigOptions;
-    	/// Current IP Configuration options of device\n
-    	/// value:4 LLA is active\n
-    	/// value:5 LLA and Persistent IP are active\n
-    	/// value:6 LLA and DHCP are active\n
-    	/// value:7 LLA, DHCP and Persistent IP are active\n
-    	/// value:0 Get fail
-	    public uint nIpConfigCurrent;
-	    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-        public uint[] nReserved;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string macAddress;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string ipAddress;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string subnetMask;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string defaultGateWay;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string protocolVersion;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string ipConfiguration;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public _string_256[] chReserved;
+    	offLine,
+    	onLine
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct _bool
+    public enum IMV_EVideoType
     {
-        [MarshalAs(UnmanagedType.U1)]
-        public bool value;
-    }
- 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_UsbDeviceInfo
-    {
-
-        [MarshalAs(UnmanagedType.U1)]
-        public bool bLowSpeedSupported;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool bFullSpeedSupported;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool bHighSpeedSupported;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool bSuperSpeedSupported;
-        [MarshalAs(UnmanagedType.U1)]
-        public bool bDriverInstalled;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-        public _bool[] boolReserved;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public uint[] Reserved;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string configurationValid;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string genCPVersion;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string u3vVersion;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string deviceGUID;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string familyName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string u3vSerialNumber;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string speed;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string maxPower;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public _string_256[] chReserved;
+    	typeVideoFormatAVI = 0,
+    	typeVideoFormatNotSupport = 255
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 3096)]
-    public struct _DeviceSpecificInfo
+    public enum IMV_EFlipType
     {
-//        [FieldOffset(0)]
-//        public IMV_GigEDeviceInfo gigeDeviceInfo;
-        [FieldOffset(0)]
-        public IMV_UsbDeviceInfo usbDeviceInfo;
+    	typeFlipVertical,
+    	typeFlipHorizontal
     }
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct _InterfaceInfo
+    public enum IMV_ERotationAngle
     {
-        [FieldOffset(0)]
-        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
-        [FieldOffset(0)]
-        public IMV_UsbInterfaceInfo usbInterfaceInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMV_DeviceInfo
-    {
-    	public IMV_ECameraType nCameraType;		
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-        public int[] nCameraReserved;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string cameraKey;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string cameraName;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string serialName;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string vendorName;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string modelName;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string manufactureInfo;
-        
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string deviceVersion;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-        public _string_256[] cameraReserved;
-
-        public _DeviceSpecificInfo DeviceSpecificInfo;
-
-        public IMV_EInterfaceType nInterfaceType;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-        public int[] nInterfaceReserved;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
-        public string InterfaceName;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-        public _string_256[] interfaceReserved;
-
-        public _InterfaceInfo InterfaceInfo;
-
+    	rotationAngle90,
+    	rotationAngle180,
+    	rotationAngle270
     }
 
     public enum IMV_EPixelType
@@ -402,6 +292,268 @@ namespace Camara_MARS
     	gvspPixelMono1e = 0x01080FFF
     }
 
+    // Definicion de estructuras
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_String 
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string val;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_Bool
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public bool val;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_GigEInterfaceInfo
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string description;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string macAddress;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string ipAddress;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string subnetMask;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string defaultGateWay;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public IMV_String[] chReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_UsbInterfaceInfo
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string description;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string vendorID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string deviceID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string subsystemID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string revision;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string speed;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public IMV_String[] chReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_GigEDeviceInfo
+    {
+      	/// Supported IP configuration options of device\n
+    	/// value:4 Device supports LLA \n
+    	/// value:5 Device supports LLA and Persistent IP\n
+    	/// value:6 Device supports LLA and DHCP\n
+    	/// value:7 Device supports LLA, DHCP and Persistent IP\n
+    	/// value:0 Get fail
+        public uint nIpConfigOptions;
+    	/// Current IP Configuration options of device\n
+    	/// value:4 LLA is active\n
+    	/// value:5 LLA and Persistent IP are active\n
+    	/// value:6 LLA and DHCP are active\n
+    	/// value:7 LLA, DHCP and Persistent IP are active\n
+    	/// value:0 Get fail
+	    public uint nIpConfigCurrent;
+	    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public uint[] nReserved;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string macAddress;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string ipAddress;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string subnetMask;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string defaultGateWay;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string protocolVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string ipConfiguration;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+        public IMV_String[] chReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_UsbDeviceInfo
+    {
+
+        [MarshalAs(UnmanagedType.U1)]
+        public bool bLowSpeedSupported;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool bFullSpeedSupported;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool bHighSpeedSupported;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool bSuperSpeedSupported;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool bDriverInstalled;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public IMV_Bool[] boolReserved;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public uint[] Reserved;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string configurationValid;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string genCPVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string u3vVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string deviceGUID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string familyName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string u3vSerialNumber;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string speed;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string maxPower;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public IMV_String[] chReserved;
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 3096)]
+    public struct _DeviceSpecificInfo
+    {
+//        [FieldOffset(0)]
+//        public IMV_GigEDeviceInfo gigeDeviceInfo;
+        // Por ahora solo funciona con usb  
+        [FieldOffset(0)]
+        public IMV_UsbDeviceInfo usbDeviceInfo;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct _InterfaceInfo
+    {
+        [FieldOffset(0)]
+        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
+        [FieldOffset(0)]
+        public IMV_UsbInterfaceInfo usbInterfaceInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_DeviceInfo
+    {
+    	public IMV_ECameraType nCameraType;		
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public int[] nCameraReserved;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string cameraKey;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string cameraName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string serialName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string vendorName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string modelName;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string manufactureInfo;
+        
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string deviceVersion;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public IMV_String[] cameraReserved;
+
+        public _DeviceSpecificInfo DeviceSpecificInfo;
+
+        public IMV_EInterfaceType nInterfaceType;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public int[] nInterfaceReserved;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+        public string InterfaceName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+        public IMV_String[] interfaceReserved;
+
+        public _InterfaceInfo InterfaceInfo;
+
+    }
+   
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_ErrorList
+    {
+    	public uint	nParamCnt;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = Const.IMV_MAX_ERROR_LIST_NUM)]
+    	public IMV_String[]	paramNameList;
+    }
+   
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_DeviceList
+    {
+    	public uint nDevNum;		
+        public IntPtr pDevInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_SConnectArg
+    {
+    	public IMV_EVType @event;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+    	public uint[] nReserve;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_SParamUpdateArg
+    {
+        [MarshalAs(UnmanagedType.U1)]
+    	public bool isPoll;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+    	public uint[] nReserve;
+    	public uint	nParamCnt;
+    	public IntPtr pParamNameList;  // puntero a array de strings
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_SStreamArg
+    {
+    	public uint	channel;
+    	public UInt64 blockId;
+    	public UInt64 timeStamp;
+    	public IMV_EEventStatus	eStreamEventStatus;
+    	public uint	status;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 9)]
+    	public uint[] nReserve;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_SMsgChannelArg
+    {
+    	public ushort eventId;
+    	public ushort channelId;
+    	public UInt64 blockId;
+    	public UInt64 timeStamp;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+    	public uint[] nReserve;
+    	public uint	nParamCnt;
+    	public IntPtr pParamNameList;   // Puntero a array de strings
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_ChunkDataInfo
+    {
+    	public uint chunkID;
+    	public uint	nParamCnt;
+    	public IntPtr pParamNameList;   // Puntero a array de strings
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct IMV_FrameInfo
     {
@@ -418,6 +570,82 @@ namespace Camara_MARS
     	public uint	recvFrameTime;			
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 19)]
     	public uint[] nReserved;		
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_Frame
+    {
+    	public IntPtr frameHandle;  // puntero a void
+    	public IntPtr pData;       // puntero a unsigned char
+    	public IMV_FrameInfo frameInfo;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+    	public uint[] nReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_EnumEntryInfo
+    {
+    	public UInt64 value;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Const.IMV_MAX_STRING_LENTH)]
+    	public string name;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_EnumEntryList
+    {
+    	public uint nEnumEntryBufferSize;
+    	public IntPtr pEnumEntryInfo;  // Puntero a IMV_EnumEntryInfo
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_PixelConvertParam
+    {
+    	public uint	nWidth;
+    	public uint	nHeight;
+    	public IMV_EPixelType ePixelFormat;
+    	public IntPtr pSrcData;
+    	public uint nSrcDataLen;
+    	public uint nPaddingX;
+    	public uint nPaddingY;
+    	public IMV_EBayerDemosaic eBayerDemosaic;
+    	public IMV_EPixelType	eDstPixelFormat;
+    	public IntPtr pDstBuf;
+    	public uint nDstBufSize;
+    	public uint nDstDataLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+    	public uint[] nReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_FlipImageParam
+    {
+    	public uint nWidth;
+    	public uint nHeight;
+    	public IMV_EPixelType ePixelFormat;
+    	public IMV_EFlipType eFlipType;
+    	public IntPtr pSrcData;
+    	public uint nSrcDataLen;
+    	public IntPtr pDstBuf;
+    	public uint nDstBufSize;
+    	public uint nDstDataLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+    	public uint[] nReserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMV_RotateImageParam
+    {
+    	public uint nWidth;
+    	public uint nHeight;
+    	public IMV_EPixelType ePixelFormat;
+    	public IMV_ERotationAngle eRotationAngle;
+    	public IntPtr pSrcData;
+    	public uint nSrcDataLen;
+    	public IntPtr pDstBuf;
+    	public uint nDstBufSize;
+    	public uint nDstDataLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+    	public uint[] nReserved;
     }
 
 }
