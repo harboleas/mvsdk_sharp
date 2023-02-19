@@ -36,29 +36,53 @@ namespace Camera_MARS
         [DllImport("MVSDK.so")]
         static extern int IMV_DestroyHandle(IntPtr handle);   
  
+        public class VideoCam : IDisposable
+        {
+            IntPtr handle;
+            public IMV_DeviceInfo info;
+
+            public VideoCam(uint index)
+            {
+                info = EnumDevices(IMV_EInterfaceType.interfaceTypeUsb3)[index];
+
+                var id = new Id();
+                id.index = index;
+                IntPtr pid = Marshal.AllocHGlobal(Marshal.SizeOf(id));
+                Marshal.StructureToPtr<Id>(id, pid, true);
+                IMV_CreateHandle(out handle, IMV_ECreateHandleMode.modeByIndex, pid);
+                Marshal.FreeHGlobal(pid);
+            }
+
+            public void Dispose()
+            {
+                IMV_DestroyHandle(handle);
+            }
+
+        }
+    }
+
+    //////
+
+    public static class Prueba
+    {
         static void Main(string[] args)
         {
         
-            var info = EnumDevices(IMV_EInterfaceType.interfaceTypeUsb3);
+            var info = IMVApi.EnumDevices(IMV_EInterfaceType.interfaceTypeUsb3);
 
             for (int i = 0; i < info.Length; i++)
             {
                 Console.WriteLine(info[i].cameraKey);
             }
 
-            IntPtr handle;
-            var id = new Id() { index =  0};
-            IntPtr pid = Marshal.AllocHGlobal(Marshal.SizeOf(id));
-            Marshal.StructureToPtr<Id>(id, pid, true);
-
-            var ret = IMV_CreateHandle(out handle, IMV_ECreateHandleMode.modeByIndex, pid);
-            Console.WriteLine(ret);
+            var cam = new IMVApi.VideoCam(0);
+            Console.WriteLine(cam.info.cameraKey);
         }
     }
 
 
     // Definicion de constantes
-    public static class Const
+    static class Const
     {
         // Error code
         public const int IMV_OK = 0;
