@@ -380,8 +380,8 @@ namespace MVSDK_Sharp
     [StructLayout(LayoutKind.Explicit)]
     public struct _InterfaceInfo
     {
-        [FieldOffset(0)]
-        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
+//        [FieldOffset(0)]
+//        public IMV_GigEInterfaceInfo gigeInterfaceInfo;
         [FieldOffset(0)]
         public IMV_UsbInterfaceInfo usbInterfaceInfo;
     }
