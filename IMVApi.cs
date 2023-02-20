@@ -6,7 +6,7 @@ namespace MVSDK_Sharp
 {
     // API
     public static class IMVApi
-   {
+    {
         [DllImport("MVSDK.so")]
         static extern int IMV_EnumDevices(out IMV_DeviceList DeviceList, IMV_EInterfaceType interfaceType);   
 
@@ -66,12 +66,12 @@ namespace MVSDK_Sharp
             return info;      
         }
 
-        public class VideoCam : IDisposable
+        public class VideoCapture : IDisposable
         {
             IntPtr handle;
             public IMV_DeviceInfo devInfo;
 
-            public VideoCam(uint index)
+            public VideoCapture(uint index)
             {
 
                 IMV_CreateHandle(out handle, IMV_ECreateHandleMode.modeByIndex, in index);
@@ -118,7 +118,6 @@ namespace MVSDK_Sharp
                 var ret = IMV_StopGrabbing(handle);
                 return ret;
             }
- 
 
             public int ReadFrame(out Mat frame, uint timeoutMS)
             {
@@ -166,7 +165,7 @@ namespace MVSDK_Sharp
                 Console.WriteLine(info[i].cameraKey);
             }
 
-            var cam = new IMVApi.VideoCam(1);
+            var cam = new IMVApi.VideoCapture(1);
             Console.WriteLine(cam.devInfo.cameraKey);
             Console.WriteLine(cam.devInfo.DeviceSpecificInfo.usbDeviceInfo.maxPower);
             Console.WriteLine(cam.IsOpen());
