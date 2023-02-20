@@ -508,7 +508,7 @@ namespace MVSDK_Sharp
     	public uint	width;		
     	public uint	height;
     	public uint	size;	
-    	IMV_EPixelType pixelFormat;	
+    	public IMV_EPixelType pixelFormat;	
     	public UInt64 timeStamp;				
     	public uint chunkCount;
     	public uint	paddingX;	
