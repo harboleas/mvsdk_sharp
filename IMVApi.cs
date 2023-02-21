@@ -216,6 +216,62 @@ namespace MVSDK_Sharp
                 return ret;
             }
 
+            public bool FpsEnable
+            {
+                get 
+                {
+                    bool val;
+                    IMV_GetBoolFeatureValue(handle, "AcquisitionFrameRateEnable", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetBoolFeatureValue(handle, "AcquisitionFrameRateEnable", value);
+                }
+            }
+
+            public double Fps
+            {
+                get 
+                {
+                    double val;
+                    IMV_GetDoubleFeatureValue(handle, "AcquisitionFrameRate", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetDoubleFeatureValue(handle, "AcquisitionFrameRate", value);
+                }
+            }
+
+            public UInt64 ExposureAuto
+            {
+                get 
+                {
+                    UInt64 val;
+                    IMV_GetEnumFeatureValue(handle, "ExposureAuto", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetEnumFeatureValue(handle, "ExposureAuto", value);
+                }
+            }
+
+            public double ExposureTime
+            {
+                get 
+                {
+                    double val;
+                    IMV_GetDoubleFeatureValue(handle, "ExposureTime", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetDoubleFeatureValue(handle, "ExposureTime", value);
+                }
+            }
+
             public void Dispose()
             {
                 IMV_DestroyHandle(handle);
@@ -245,8 +301,13 @@ namespace MVSDK_Sharp
             Console.WriteLine(cam.IsOpen());
             Console.WriteLine(cam.Open());
             Console.WriteLine(cam.IsOpen());
-            Console.WriteLine(cam.SaveCfg("pepe.xml"));
 
+            cam.ExposureAuto = 1;
+            Console.WriteLine("Exposure Auto " + cam.ExposureAuto.ToString());
+            Console.WriteLine("Exposure Time " + cam.ExposureTime.ToString());
+            Console.WriteLine("Fps enable " + cam.FpsEnable.ToString());
+            Console.WriteLine("Fps " + cam.Fps.ToString());
+            Console.WriteLine(cam.SaveCfg("pepe.xml"));
             Mat frame;
             cam.StartGrabbing();
             Console.WriteLine(cam.IsGrabbing());
