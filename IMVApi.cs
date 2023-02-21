@@ -7,8 +7,10 @@ namespace MVSDK_Sharp
     // API
     public static class IMVApi
     {
+        // Ver IMVApi.h del SDK para una descripcion de las funciones 
+
         [DllImport("MVSDK.so")]
-        static extern int IMV_EnumDevices(out IMV_DeviceList DeviceList, IMV_EInterfaceType interfaceType);   
+        static extern int IMV_EnumDevices(out IMV_DeviceList deviceList, IMV_EInterfaceType interfaceType);   
 
         [DllImport("MVSDK.so")]
         static extern int IMV_CreateHandle(out IntPtr handle, IMV_ECreateHandleMode mode, in uint pIdentifier);   
@@ -17,7 +19,7 @@ namespace MVSDK_Sharp
         static extern int IMV_DestroyHandle(IntPtr handle);   
 
         [DllImport("MVSDK.so")]
-        static extern int IMV_GetDeviceInfo(IntPtr handle, out IMV_DeviceInfo DevInfo);
+        static extern int IMV_GetDeviceInfo(IntPtr handle, out IMV_DeviceInfo devInfo);
 
         [DllImport("MVSDK.so")]
         static extern int IMV_Open(IntPtr handle);
@@ -47,17 +49,80 @@ namespace MVSDK_Sharp
         static extern int IMV_StopGrabbing(IntPtr handle);
  
         [DllImport("MVSDK.so")]
-        static extern int IMV_GetFrame(IntPtr handle, out IMV_Frame Frame, uint timeoutMS);
+        static extern int IMV_GetFrame(IntPtr handle, out IMV_Frame frame, uint timeoutMS);
 
         [DllImport("MVSDK.so")]
-        static extern int IMV_ReleaseFrame(IntPtr handle, in IMV_Frame Frame);
+        static extern int IMV_ReleaseFrame(IntPtr handle, in IMV_Frame frame);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetBufferCount(IntPtr handle, uint nSize);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_ClearFrameBuffer(IntPtr handle);
+
+        [DllImport("MVSDK.so")]
+        static extern bool IMV_FeatureIsAvailable(IntPtr handle, string featureName);
+
+        [DllImport("MVSDK.so")]
+        static extern bool IMV_FeatureIsReadable(IntPtr handle, string featureName);
+
+        [DllImport("MVSDK.so")]
+        static extern bool IMV_FeatureIsWriteable(IntPtr handle, string featureName);
+        
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetIntFeatureValue(IntPtr handle, string featureName, out UInt64 intValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetIntFeatureMin(IntPtr handle, string featureName, out UInt64 intValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetIntFeatureMax(IntPtr handle, string featureName, out UInt64 intValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetIntFeatureInc(IntPtr handle, string featureName, out UInt64 intValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetIntFeatureValue(IntPtr handle, string featureName, UInt64 intValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetDoubleFeatureValue(IntPtr handle, string featureName, out double doubleValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetDoubleFeatureMin(IntPtr handle, string featureName, out double doubleValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetDoubleFeatureMax(IntPtr handle, string featureName, out double doubleValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetDoubleFeatureValue(IntPtr handle, string featureName, double doubleValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetBoolFeatureValue(IntPtr handle, string featureName, out bool boolValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetBoolFeatureValue(IntPtr handle, string featureName, bool boolValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetEnumFeatureValue(IntPtr handle, string featureName, out UInt64 enumValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetEnumFeatureValue(IntPtr handle, string featureName, UInt64 enumValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetStringFeatureValue(IntPtr handle, string featureName, out IMV_String stringValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetStringFeatureValue(IntPtr handle, string featureName, string stringValue);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_ExecuteCommandFeature(IntPtr handle, string featureName);
 
 
- 
-        public static IMV_DeviceInfo[] EnumDevices(IMV_EInterfaceType EInterfaceType)
+        // Enumera los dispositivos conectados
+        public static IMV_DeviceInfo[] EnumDevices(IMV_EInterfaceType eInterfaceType)
         {
             IMV_DeviceList devlist;
-            var ret = IMV_EnumDevices(out devlist, EInterfaceType);
+            var ret = IMV_EnumDevices(out devlist, eInterfaceType);
             var info = new IMV_DeviceInfo[devlist.nDevNum];
             int size = Marshal.SizeOf<IMV_DeviceInfo>();
             for (int i = 0; i < devlist.nDevNum; i++)
@@ -97,11 +162,20 @@ namespace MVSDK_Sharp
                 return IMV_Close(handle);
             }
  
+            // Guarda la configuracion de la camara en un archivo
             public int SaveCfg(string fileName)
             {
                 var ret = IMV_SaveDeviceCfg(handle, fileName);
                 return ret;
+
             }
+            // Carga en la camara el archivo de configuracion
+            public int LoadCfg(string fileName, out IMV_ErrorList errorList)
+            {
+                var ret = IMV_LoadDeviceCfg(handle, fileName, out errorList);
+                return ret;
+            }
+
 
             public int StartGrabbing()
             {
@@ -123,7 +197,6 @@ namespace MVSDK_Sharp
             {
                 IMV_Frame imv_frame;
                 var ret = IMV_GetFrame(handle, out imv_frame, timeoutMS);
-                var ret2 = IMV_ReleaseFrame(handle, in imv_frame);
                 var rows = (int) imv_frame.frameInfo.height;
                 var cols = (int) imv_frame.frameInfo.width;
                 Console.WriteLine(imv_frame.frameInfo.recvFrameTime);
@@ -139,6 +212,7 @@ namespace MVSDK_Sharp
                         break;
                 }
 
+                var ret2 = IMV_ReleaseFrame(handle, in imv_frame);
                 return ret;
             }
 
