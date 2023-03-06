@@ -295,6 +295,31 @@ namespace MVSDK_Sharp
                 return ret;                
             }
 
+            public int SetLineTriggerConf(int n_line)
+            {
+                int ret = Const.IMV_OK;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerSource", "Line"+n_line);
+                if (ret != Const.IMV_OK)
+                    return ret;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerSelector", "FrameStart");
+                if (ret != Const.IMV_OK)
+                    return ret;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerActivation", "RisingEdge");
+                if (ret != Const.IMV_OK)
+                    return ret;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerMode", "On");
+                if (ret != Const.IMV_OK)
+                    return ret;
+
+                return ret;                
+            }
+
+            public int TriggerOff()
+            {
+                var ret = IMV_SetEnumFeatureSymbol(handle, "TriggerMode", "Off");
+                return ret;
+            }
+
             public int SoftTrigger()
             {
                 var ret = IMV_ExecuteCommandFeature(handle, "TriggerSoftware");
