@@ -117,6 +117,13 @@ namespace MVSDK_Sharp
         [DllImport("MVSDK.so")]
         static extern int IMV_ExecuteCommandFeature(IntPtr handle, string featureName);
 
+        [DllImport("MVSDK.so")]
+        static extern int IMV_GetEnumFeatureSymbol(IntPtr handle, string featureName, out IMV_String enumSymbol);
+
+        [DllImport("MVSDK.so")]
+        static extern int IMV_SetEnumFeatureSymbol(IntPtr handle, string featureName, string enumSymbol);
+
+
 
         // Enumera los dispositivos conectados
         public static IMV_DeviceInfo[] EnumDevices(IMV_EInterfaceType eInterfaceType)
@@ -199,7 +206,7 @@ namespace MVSDK_Sharp
                 var ret = IMV_GetFrame(handle, out imv_frame, timeoutMS);
                 var rows = (int) imv_frame.frameInfo.height;
                 var cols = (int) imv_frame.frameInfo.width;
-                Console.WriteLine(imv_frame.frameInfo.recvFrameTime);
+               // Console.WriteLine(imv_frame.frameInfo.recvFrameTime);
                 
                 switch(imv_frame.frameInfo.pixelFormat)
                 {
@@ -272,6 +279,28 @@ namespace MVSDK_Sharp
                 }
             }
 
+            public int SetSoftTriggerConf()
+            {
+                int ret = Const.IMV_OK;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerSource", "Software");
+                if (ret != Const.IMV_OK)
+                    return ret;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerSelector", "FrameStart");
+                if (ret != Const.IMV_OK)
+                    return ret;
+                ret = IMV_SetEnumFeatureSymbol(handle, "TriggerMode", "On");
+                if (ret != Const.IMV_OK)
+                    return ret;
+
+                return ret;                
+            }
+
+            public int SoftTrigger()
+            {
+                var ret = IMV_ExecuteCommandFeature(handle, "TriggerSoftware");
+                return ret;
+            }
+
             public void Dispose()
             {
                 IMV_DestroyHandle(handle);
@@ -295,7 +324,7 @@ namespace MVSDK_Sharp
                 Console.WriteLine(info[i].cameraKey);
             }
 
-            var cam = new IMVApi.VideoCapture(1);
+            var cam = new IMVApi.VideoCapture(0);
             Console.WriteLine(cam.devInfo.cameraKey);
             Console.WriteLine(cam.devInfo.DeviceSpecificInfo.usbDeviceInfo.maxPower);
             Console.WriteLine(cam.IsOpen());
