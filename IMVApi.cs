@@ -331,6 +331,62 @@ namespace MVSDK_Sharp
                 IMV_DestroyHandle(handle);
             }
 
+            public UInt64 Width 
+            {
+                get 
+                {
+                    UInt64 val;
+                    IMV_GetIntFeatureValue(handle, "Width", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetIntFeatureValue(handle, "Width", value);
+                }
+            }
+            public UInt64 Height 
+            {
+                get 
+                {
+                    UInt64 val;
+                    IMV_GetIntFeatureValue(handle, "Height", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetIntFeatureValue(handle, "Height", value);
+                }
+            }
+            public UInt64 OffsetX 
+            {
+                get 
+                {
+                    UInt64 val;
+                    IMV_GetIntFeatureValue(handle, "OffsetX", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetIntFeatureValue(handle, "OffsetX", value);
+                }
+            }
+           public UInt64 OffsetY 
+            {
+                get 
+                {
+                    UInt64 val;
+                    IMV_GetIntFeatureValue(handle, "OffsetY", out val);
+                    return val;
+                }
+                set
+                {
+                    IMV_SetIntFeatureValue(handle, "OffsetY", value);
+                }
+            }
+
+
+
+
         }
     }
 
