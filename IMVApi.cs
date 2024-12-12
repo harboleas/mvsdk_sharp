@@ -344,6 +344,7 @@ namespace MVSDK_Sharp
                     IMV_SetIntFeatureValue(handle, "Width", value);
                 }
             }
+
             public UInt64 Height 
             {
                 get 
@@ -357,6 +358,7 @@ namespace MVSDK_Sharp
                     IMV_SetIntFeatureValue(handle, "Height", value);
                 }
             }
+
             public UInt64 OffsetX 
             {
                 get 
@@ -370,7 +372,8 @@ namespace MVSDK_Sharp
                     IMV_SetIntFeatureValue(handle, "OffsetX", value);
                 }
             }
-           public UInt64 OffsetY 
+            
+            public UInt64 OffsetY 
             {
                 get 
                 {
@@ -383,10 +386,6 @@ namespace MVSDK_Sharp
                     IMV_SetIntFeatureValue(handle, "OffsetY", value);
                 }
             }
-
-
-
-
         }
     }
 
